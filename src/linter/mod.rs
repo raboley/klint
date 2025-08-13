@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use tracing::{debug, info, warn};
 
 use crate::case_detector::{detect_case, NamingCase};
-use crate::config::Config;
+use crate::configuration::Config;
 use crate::disable_comments::{parse_disable_comments, is_rule_disabled, DisableDirective};
 use crate::parser::{Parser, TableStatement};
 
