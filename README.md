@@ -7,7 +7,7 @@ A fast and flexible linter for Kusto Query Language (KQL) table naming conventio
 - **Table Naming Convention Enforcement**: Supports snake_case, PascalCase, camelCase, SCREAMING_SNAKE_CASE, and kebab-case
 - **Automatic Fix Mode**: Automatically convert table names to the desired convention
 - **Preview Mode**: See what changes would be made without modifying files
-- **Inline Disable Comments**: Disable linting for specific lines with `// klint-disable` or `//nolint:klint`
+- **Inline Disable Comments**: Disable linting for specific lines with `//nolint:` comments
 - **Flexible Configuration**: YAML-based configuration with validation
 - **Multiple Output Formats**: Terminal (colored) and JSON output
 - **Fast Performance**: Written in Rust for speed and reliability
@@ -116,20 +116,16 @@ Disable linting for specific lines or rules:
 
 ```kql
 // Disable all rules for current line
-.create table legacy_data (id: int) // klint-disable
+.create table legacy_data (id: int) //nolint:
 
 // Disable specific rule for current line  
-.create table user_data (id: int) // klint-disable table-naming
-
-// Disable for next line
-// klint-disable-next-line table-naming
-.create table user_data (id: int)
-
-// Go-style nolint (current line only)
 .create table user_data (id: int) //nolint:table-naming
 
-// With reason
-.create table user_data (id: int) // klint-disable table-naming -- Legacy compatibility
+// Disable multiple rules for current line
+.create table user_data (id: int) //nolint:table-naming,other-rule
+
+// Works with SQL-style comments too
+.create table user_data (id: int) -- nolint:table-naming
 ```
 
 ## Configuration Options

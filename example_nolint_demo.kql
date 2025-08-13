@@ -1,29 +1,21 @@
-// Comprehensive demonstration of both klint-disable and nolint comment styles
+// Comprehensive demonstration of nolint comment styles
 
-// Original klint-disable style
-.create table legacy_user_data (id: int, name: string) // klint-disable table-naming -- Required for backward compatibility
+// Disable all rules for current line
+.create table temp_staging_data (id: int, value: string) //nolint:
 
-// Go-style nolint - disable all klint rules
-.create table temp_staging_data (id: int, value: string) //nolint:klint
-
-// Go-style nolint - disable specific rule
+// Disable specific rule for current line
 .create table another_legacy_table (id: int, data: string) //nolint:table-naming
 
-// Multiple rules with nolint (even though we only have one rule)
+// Multiple rules (even though we only have one rule currently)
 .create table multi_rule_example (id: int) //nolint:table-naming,other-rule
 
-// SQL-style comment with klint-disable
-.create table old_api_data (id: int, response: string) -- klint-disable table-naming
+// SQL-style comment with nolint
+.create table old_api_data (id: int, response: string) -- nolint:table-naming
 
-// Next-line disable (klint-disable style only, nolint doesn't support this)
-// klint-disable-next-line table-naming
-.create table disabled_next_line (id: int, value: string)
-
-// Mixed styles in one file - all should be ignored
-.create table style_one (id: int) // klint-disable table-naming
-.create table style_two (id: int) //nolint:table-naming  
-.create table style_three (id: int) -- klint-disable table-naming
-.create table style_four (id: int) //nolint:klint
+// Mixed comment styles in one file - all should be ignored
+.create table style_one (id: int) //nolint:table-naming
+.create table style_two (id: int) -- nolint:table-naming
+.create table style_three (id: int) //nolint:
 
 // This table will be flagged since it has no disable comment
 .create table should_be_flagged (id: int, value: string)

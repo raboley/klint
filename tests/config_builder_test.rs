@@ -23,9 +23,12 @@ fn test_config_builder_full() {
         .colors(false)
         .exclude_pattern("*.tmp")
         .build();
-    
+
     assert_eq!(config.rules.table_naming, "PascalCase");
-    assert_eq!(config.rules.excluded_tables, vec!["legacy_table", "old_data"]);
+    assert_eq!(
+        config.rules.excluded_tables,
+        vec!["legacy_table", "old_data"]
+    );
     assert_eq!(config.output.format, "json");
     assert!(!config.output.colors);
     assert_eq!(config.exclude, vec!["*.tmp"]);
@@ -37,7 +40,7 @@ fn test_config_builder_with_validation() {
         .table_naming("snake_case")
         .output_format("terminal")
         .build_validated();
-    
+
     assert!(result.is_ok());
 }
 
@@ -46,23 +49,28 @@ fn test_config_builder_validation_fails() {
     let result = Config::builder()
         .table_naming("invalid_case")
         .build_validated();
-    
+
     assert!(result.is_err());
     let error = result.unwrap_err();
-    assert!(error.to_string().contains("Invalid table naming convention"));
+    assert!(error
+        .to_string()
+        .contains("Invalid table naming convention"));
 }
 
 #[test]
 fn test_config_builder_bulk_operations() {
     let tables = vec!["table1", "table2", "table3"];
     let patterns = vec!["*.log", "*.tmp"];
-    
+
     let config = Config::builder()
         .exclude_tables(tables)
         .exclude(patterns)
         .build();
-    
-    assert_eq!(config.rules.excluded_tables, vec!["table1", "table2", "table3"]);
+
+    assert_eq!(
+        config.rules.excluded_tables,
+        vec!["table1", "table2", "table3"]
+    );
     assert_eq!(config.exclude, vec!["*.log", "*.tmp"]);
 }
 
@@ -75,7 +83,7 @@ fn test_config_builder_chaining() {
         .colors(true)
         .output_format("terminal")
         .build();
-    
+
     // Verify all settings were applied
     assert_eq!(config.rules.table_naming, "camelCase");
     assert_eq!(config.rules.excluded_tables, vec!["legacy"]);
