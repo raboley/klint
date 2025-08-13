@@ -9,6 +9,7 @@ use tracing::{debug, info, warn};
 
 use crate::case_detector::{detect_case, NamingCase};
 use crate::config::Config;
+use crate::disable_comments::{parse_disable_comments, is_rule_disabled, DisableDirective};
 use crate::parser::{Parser, TableStatement};
 
 /// Main linter struct
@@ -48,31 +49,41 @@ impl Linter {
         
         debug!("Linting file: {}", file_name);
         
+        // Parse disable comments first
+        let disable_directives = parse_disable_comments(content);
+        
         let parser = Parser::new(content.to_string());
         let statements = parser.parse()?;
         
         let mut violations = Vec::new();
         
         for statement in statements {
-            if let Some(violation) = self.check_table_name(&statement)? {
+            if let Some(violation) = self.check_table_name(&statement, &disable_directives)? {
                 violations.push(violation);
             }
         }
         
-        info!("Found {} violations in {}", violations.len(), file_name);
+        info!("Found {} violations in {} (after applying disable directives)", violations.len(), file_name);
         
         Ok(LintResult {
             file_path: file_path.cloned(),
             violations,
             content: content.to_string(),
+            disable_directives,
         })
     }
 
     /// Check a single table name for violations
-    fn check_table_name(&self, statement: &TableStatement) -> Result<Option<Violation>> {
+    fn check_table_name(&self, statement: &TableStatement, disable_directives: &[DisableDirective]) -> Result<Option<Violation>> {
         // Skip if table is excluded
         if self.config.is_table_excluded(&statement.table_name) {
             debug!("Skipping excluded table: {}", statement.table_name);
+            return Ok(None);
+        }
+        
+        // Check if table-naming rule is disabled for this line
+        if is_rule_disabled(disable_directives, statement.line, "table-naming") {
+            debug!("Skipping table '{}' on line {} due to disable directive", statement.table_name, statement.line);
             return Ok(None);
         }
         
@@ -108,6 +119,7 @@ pub struct LintResult {
     pub file_path: Option<PathBuf>,
     pub violations: Vec<Violation>,
     pub content: String,
+    pub disable_directives: Vec<DisableDirective>,
 }
 
 impl LintResult {

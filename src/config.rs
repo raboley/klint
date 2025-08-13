@@ -1,6 +1,6 @@
 //! Configuration management module
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -105,6 +105,31 @@ impl Config {
         Ok(config)
     }
 
+    /// Load and validate configuration from a YAML file
+    /// 
+    /// # Arguments
+    /// 
+    /// * `path` - Path to the configuration file
+    /// 
+    /// # Returns
+    /// 
+    /// The loaded and validated configuration, or an error if the file cannot be
+    /// read, parsed, or validated
+    /// 
+    /// # Examples
+    /// 
+    /// ```no_run
+    /// use klint::Config;
+    /// 
+    /// let config = Config::from_file_validated(".klint.yml").unwrap();
+    /// ```
+    pub fn from_file_validated<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let config = Self::from_file(path)?;
+        config.validate()
+            .with_context(|| "Configuration validation failed")?;
+        Ok(config)
+    }
+
     /// Find configuration file in current or parent directories
     /// 
     /// Searches for `.klint.yml` or `.klint.yaml` files starting from the current
@@ -157,8 +182,18 @@ impl Config {
     /// True if the table should be excluded from linting
     pub fn is_table_excluded(&self, table_name: &str) -> bool {
         self.rules.excluded_tables.iter().any(|pattern| {
-            // Simple pattern matching for now
-            pattern == table_name || pattern == "*"
+            // Support glob patterns
+            if pattern == "*" {
+                true
+            } else if pattern.contains('*') || pattern.contains('?') {
+                // Use glob pattern matching
+                match glob::Pattern::new(pattern) {
+                    Ok(glob_pattern) => glob_pattern.matches(table_name),
+                    Err(_) => pattern == table_name, // Fallback to exact match
+                }
+            } else {
+                pattern == table_name
+            }
         })
     }
 
@@ -186,6 +221,71 @@ impl Config {
     /// A Config instance with default settings (PascalCase table naming)
     pub fn create_default() -> Self {
         Config::default()
+    }
+
+    /// Validate the configuration and return helpful error messages
+    /// 
+    /// # Returns
+    /// 
+    /// Ok(()) if the configuration is valid, or an error with detailed information
+    /// about what is invalid and how to fix it
+    pub fn validate(&self) -> Result<()> {
+        let mut errors = Vec::new();
+
+        // Validate table naming convention
+        if self.rules.table_naming.parse::<NamingCase>().is_err() {
+            let valid_options = ["PascalCase", "camelCase", "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case"];
+            errors.push(format!(
+                "Invalid table naming convention '{}'. Valid options are: {}",
+                self.rules.table_naming,
+                valid_options.join(", ")
+            ));
+        }
+
+        // Validate output format
+        let valid_formats = ["terminal", "json"];
+        if !valid_formats.contains(&self.output.format.as_str()) {
+            errors.push(format!(
+                "Invalid output format '{}'. Valid options are: {}",
+                self.output.format,
+                valid_formats.join(", ")
+            ));
+        }
+
+        // Validate excluded tables (no empty strings)
+        for (index, table) in self.rules.excluded_tables.iter().enumerate() {
+            if table.trim().is_empty() {
+                errors.push(format!(
+                    "Empty table name in excluded_tables at position {}. Remove empty entries or use '*' for all tables",
+                    index
+                ));
+            }
+        }
+
+        // Validate exclude patterns (no empty strings)
+        for (index, pattern) in self.exclude.iter().enumerate() {
+            if pattern.trim().is_empty() {
+                errors.push(format!(
+                    "Empty pattern in exclude at position {}. Remove empty entries",
+                    index
+                ));
+            }
+        }
+
+        // Return all errors if any found
+        if !errors.is_empty() {
+            let error_message = format!(
+                "Configuration validation failed:\n{}",
+                errors.iter()
+                    .enumerate()
+                    .map(|(i, err)| format!("  {}: {}", i + 1, err))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            );
+            bail!(error_message);
+        }
+
+        Ok(())
     }
 }
 

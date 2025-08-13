@@ -33,19 +33,6 @@ impl NamingCase {
         }
     }
 
-    /// Parse a naming case from a string representation (deprecated, use FromStr trait)
-    /// 
-    /// # Arguments
-    /// 
-    /// * `s` - String representation of the naming case
-    /// 
-    /// # Returns
-    /// 
-    /// The corresponding NamingCase, or Unknown if not recognized
-    #[deprecated(since = "0.1.0", note = "Use FromStr trait implementation instead")]
-    pub fn from_str(s: &str) -> Self {
-        s.parse().unwrap_or(NamingCase::Unknown)
-    }
 
     /// Convert to display string representation
     /// 
