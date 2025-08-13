@@ -56,8 +56,8 @@ impl OutputFormatter for JsonFormatter {
                 line: v.line,
                 column: v.column,
                 table_name: v.table_name.clone(),
-                current_case: v.current_case.to_string().to_string(),
-                expected_case: v.expected_case.to_string().to_string(),
+                current_case: v.current_case.to_string(),
+                expected_case: v.expected_case.to_string(),
                 message: v.message.clone(),
             })
             .collect();
@@ -75,8 +75,8 @@ impl OutputFormatter for JsonFormatter {
                     line: violation.line,
                     column: violation.column,
                     table_name: violation.table_name.clone(),
-                    current_case: violation.current_case.to_string().to_string(),
-                    expected_case: violation.expected_case.to_string().to_string(),
+                    current_case: violation.current_case.to_string(),
+                    expected_case: violation.expected_case.to_string(),
                     message: violation.message.clone(),
                 });
             }

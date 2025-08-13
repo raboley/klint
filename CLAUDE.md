@@ -160,3 +160,20 @@ Run this checklist:
 - [ ] Integration tests cover new functionality
 
 This ensures we maintain high code quality and can confidently iterate on the codebase.
+
+## Refactoring Guidelines
+
+Before returning to the user after implementing any working feature, always:
+
+1. **Leverage Rust Ecosystem**: Use context7 MCP server to research idiomatic Rust patterns and existing crates that could simplify our code
+2. **Apply Rust Paradigms**: Look for opportunities to use:
+   - Standard traits (Display, From, Into, TryFrom, etc.)
+   - Iterator patterns instead of manual loops
+   - Type-driven design and the type system for correctness
+   - Proper error handling with Result and ? operator
+   - Builder patterns for complex configuration
+3. **Simplify and Clarify**: Refactor complex logic into smaller, well-named functions that express intent clearly
+4. **Remove Duplication**: Extract common patterns into reusable utilities
+5. **Document Design Decisions**: Add comments explaining why certain approaches were chosen
+
+Always commit working code first, then refactor incrementally while maintaining all tests.

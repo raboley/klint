@@ -47,8 +47,8 @@ impl OutputFormatter for TerminalFormatter {
                 " {} Table '{}' uses {} but should use {}",
                 if self.use_colors { "✗".red().to_string() } else { "✗".to_string() },
                 violation.table_name,
-                violation.current_case.to_string(),
-                violation.expected_case.to_string()
+                violation.current_case,
+                violation.expected_case
             );
             
             if self.use_colors {

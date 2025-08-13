@@ -31,8 +31,8 @@ impl Fixer {
         debug!(
             "Fixing table '{}' from {} to {}",
             violation.table_name,
-            violation.current_case.to_string(),
-            violation.expected_case.to_string()
+            violation.current_case,
+            violation.expected_case
         );
         
         let fixed_name = convert_case(

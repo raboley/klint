@@ -2,6 +2,7 @@
 
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, info};
@@ -73,7 +74,141 @@ fn default_format() -> String {
     "terminal".to_string()
 }
 
+/// Builder for creating Config instances with fluent API
+#[derive(Debug, Default)]
+pub struct ConfigBuilder {
+    rules: Option<RulesConfig>,
+    output: Option<OutputConfig>,
+    exclude: Option<Vec<String>>,
+}
+
+impl ConfigBuilder {
+    /// Create a new ConfigBuilder
+    pub fn new() -> Self {
+        Self::default()
+    }
+    
+    /// Set the rules configuration
+    pub fn rules(mut self, rules: RulesConfig) -> Self {
+        self.rules = Some(rules);
+        self
+    }
+    
+    /// Set the table naming convention
+    pub fn table_naming<S: Into<String>>(mut self, naming: S) -> Self {
+        let mut rules = self.rules.unwrap_or_default();
+        rules.table_naming = naming.into();
+        self.rules = Some(rules);
+        self
+    }
+    
+    /// Add an excluded table
+    pub fn exclude_table<S: Into<String>>(mut self, table: S) -> Self {
+        let mut rules = self.rules.unwrap_or_default();
+        rules.excluded_tables.push(table.into());
+        self.rules = Some(rules);
+        self
+    }
+    
+    /// Set multiple excluded tables
+    pub fn exclude_tables<I, S>(mut self, tables: I) -> Self 
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        let mut rules = self.rules.unwrap_or_default();
+        rules.excluded_tables.extend(tables.into_iter().map(|t| t.into()));
+        self.rules = Some(rules);
+        self
+    }
+    
+    /// Set the output configuration
+    pub fn output(mut self, output: OutputConfig) -> Self {
+        self.output = Some(output);
+        self
+    }
+    
+    /// Set the output format
+    pub fn output_format<S: Into<String>>(mut self, format: S) -> Self {
+        let mut output = self.output.unwrap_or_default();
+        output.format = format.into();
+        self.output = Some(output);
+        self
+    }
+    
+    /// Enable or disable colored output
+    pub fn colors(mut self, colors: bool) -> Self {
+        let mut output = self.output.unwrap_or_default();
+        output.colors = colors;
+        self.output = Some(output);
+        self
+    }
+    
+    /// Set the report output path
+    pub fn report_path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        let mut output = self.output.unwrap_or_default();
+        output.report_path = Some(path.into());
+        self.output = Some(output);
+        self
+    }
+    
+    /// Set file exclusion patterns
+    pub fn exclude<I, S>(mut self, patterns: I) -> Self 
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.exclude = Some(patterns.into_iter().map(|p| p.into()).collect());
+        self
+    }
+    
+    /// Add a single exclusion pattern
+    pub fn exclude_pattern<S: Into<String>>(mut self, pattern: S) -> Self {
+        let mut exclude = self.exclude.unwrap_or_default();
+        exclude.push(pattern.into());
+        self.exclude = Some(exclude);
+        self
+    }
+    
+    /// Build the final Config instance
+    pub fn build(self) -> Config {
+        Config {
+            rules: self.rules.unwrap_or_default(),
+            output: self.output.unwrap_or_default(),
+            exclude: self.exclude.unwrap_or_default(),
+        }
+    }
+    
+    /// Build and validate the Config instance
+    pub fn build_validated(self) -> Result<Config> {
+        let config = self.build();
+        config.validate()?;
+        Ok(config)
+    }
+}
+
 impl Config {
+    /// Create a new ConfigBuilder for fluent configuration building
+    /// 
+    /// # Returns
+    /// 
+    /// A new ConfigBuilder instance for creating configurations with a fluent API
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use klint::Config;
+    /// 
+    /// let config = Config::builder()
+    ///     .table_naming("snake_case")
+    ///     .exclude_table("legacy_table")
+    ///     .colors(false)
+    ///     .build();
+    /// ```
+    pub fn builder() -> ConfigBuilder {
+        ConfigBuilder::new()
+    }
+
     /// Load configuration from a YAML file
     /// 
     /// # Arguments
@@ -168,7 +303,7 @@ impl Config {
     /// 
     /// The configured naming case for table names
     pub fn naming_case(&self) -> NamingCase {
-        self.rules.table_naming.parse().unwrap_or(NamingCase::Unknown)
+        NamingCase::try_from(self.rules.table_naming.as_str()).unwrap_or(NamingCase::Unknown)
     }
 
     /// Check if a table is excluded from linting
@@ -233,7 +368,7 @@ impl Config {
         let mut errors = Vec::new();
 
         // Validate table naming convention
-        if self.rules.table_naming.parse::<NamingCase>().is_err() {
+        if NamingCase::try_from(self.rules.table_naming.as_str()).is_err() {
             let valid_options = ["PascalCase", "camelCase", "snake_case", "SCREAMING_SNAKE_CASE", "kebab-case"];
             errors.push(format!(
                 "Invalid table naming convention '{}'. Valid options are: {}",

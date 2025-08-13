@@ -47,8 +47,8 @@ fn generate_text_report(results: &[LintResult]) -> Result<String> {
                     "  Line {}: Table '{}' uses {} but should use {}\n",
                     violation.line,
                     violation.table_name,
-                    violation.current_case.to_string(),
-                    violation.expected_case.to_string()
+                    violation.current_case,
+                    violation.expected_case
                 ));
             }
             
@@ -93,8 +93,8 @@ fn generate_markdown_report(results: &[LintResult]) -> Result<String> {
                         violation.line,
                         violation.column,
                         violation.table_name,
-                        violation.current_case.to_string(),
-                        violation.expected_case.to_string()
+                        violation.current_case,
+                        violation.expected_case
                     ));
                 }
                 

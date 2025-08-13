@@ -100,8 +100,8 @@ impl Linter {
                 message: format!(
                     "Table '{}' uses {} but should use {}",
                     statement.table_name,
-                    current_case.to_string(),
-                    expected_case.to_string()
+                    current_case,
+                    expected_case
                 ),
             };
             

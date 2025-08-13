@@ -2,6 +2,8 @@
 
 use anyhow::{anyhow, Result};
 use convert_case::{Case, Casing};
+use std::convert::TryFrom;
+use std::fmt;
 use std::str::FromStr;
 use tracing::debug;
 
@@ -34,20 +36,20 @@ impl NamingCase {
     }
 
 
-    /// Convert to display string representation
-    /// 
-    /// # Returns
-    /// 
-    /// Static string representation of the naming case
-    pub fn to_string(&self) -> &'static str {
-        match self {
+}
+
+impl fmt::Display for NamingCase {
+    /// Display the naming case as its conventional string representation
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let case_name = match self {
             NamingCase::SnakeCase => "snake_case",
             NamingCase::ScreamingSnakeCase => "SCREAMING_SNAKE_CASE",
             NamingCase::PascalCase => "PascalCase",
             NamingCase::CamelCase => "camelCase",
             NamingCase::KebabCase => "kebab-case",
             NamingCase::Unknown => "unknown",
-        }
+        };
+        write!(f, "{}", case_name)
     }
 }
 
@@ -161,13 +163,114 @@ impl FromStr for NamingCase {
     /// assert_eq!(case, NamingCase::SnakeCase);
     /// ```
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
+        let normalized = s.trim().to_lowercase();
+        match normalized.as_str() {
             "snake_case" | "snake" => Ok(NamingCase::SnakeCase),
             "screaming_snake_case" | "screaming_snake" | "upper_snake" => Ok(NamingCase::ScreamingSnakeCase),
             "pascalcase" | "pascal" | "uppercamel" => Ok(NamingCase::PascalCase),
             "camelcase" | "camel" | "lowercamel" => Ok(NamingCase::CamelCase),
             "kebab-case" | "kebab" | "dash" => Ok(NamingCase::KebabCase),
-            _ => Err(anyhow!("Unknown naming case: {}", s)),
+            _ => {
+                let valid_options = [
+                    "snake_case", "SCREAMING_SNAKE_CASE", "PascalCase", 
+                    "camelCase", "kebab-case"
+                ];
+                let suggestion = find_closest_match(&normalized, &valid_options);
+                match suggestion {
+                    Some(closest) => Err(anyhow!(
+                        "Unknown naming case '{}'. Did you mean '{}'? Valid options are: {}",
+                        s, closest, valid_options.join(", ")
+                    )),
+                    None => Err(anyhow!(
+                        "Unknown naming case '{}'. Valid options are: {}",
+                        s, valid_options.join(", ")
+                    ))
+                }
+            }
+        }
+    }
+}
+
+impl TryFrom<&str> for NamingCase {
+    type Error = anyhow::Error;
+
+    /// Try to convert from a string slice to NamingCase
+    /// 
+    /// This provides a more idiomatic way to convert strings to NamingCase
+    /// using the TryFrom trait pattern for fallible conversions.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use std::convert::TryFrom;
+    /// use klint::case_detector::NamingCase;
+    /// 
+    /// let case = NamingCase::try_from("snake_case").unwrap();
+    /// assert_eq!(case, NamingCase::SnakeCase);
+    /// ```
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        s.parse()
+    }
+}
+
+impl TryFrom<String> for NamingCase {
+    type Error = anyhow::Error;
+
+    /// Try to convert from a String to NamingCase
+    /// 
+    /// This provides a more idiomatic way to convert owned strings to NamingCase
+    /// using the TryFrom trait pattern for fallible conversions.
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        s.parse()
+    }
+}
+
+impl From<NamingCase> for Option<Case> {
+    /// Convert NamingCase to convert_case::Case for use with the convert_case crate
+    /// 
+    /// Returns None for Unknown case since it cannot be converted.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use klint::case_detector::NamingCase;
+    /// use convert_case::Case;
+    /// 
+    /// let case: Option<Case> = NamingCase::SnakeCase.into();
+    /// assert_eq!(case, Some(Case::Snake));
+    /// 
+    /// let unknown: Option<Case> = NamingCase::Unknown.into();
+    /// assert_eq!(unknown, None);
+    /// ```
+    fn from(naming_case: NamingCase) -> Self {
+        naming_case.to_convert_case()
+    }
+}
+
+impl From<Case> for NamingCase {
+    /// Convert from convert_case::Case to NamingCase
+    /// 
+    /// This provides a way to convert from the external convert_case crate
+    /// types back to our internal NamingCase enum.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use klint::case_detector::NamingCase;
+    /// use convert_case::Case;
+    /// 
+    /// let naming_case: NamingCase = Case::Snake.into();
+    /// assert_eq!(naming_case, NamingCase::SnakeCase);
+    /// ```
+    fn from(case: Case) -> Self {
+        match case {
+            Case::Snake => NamingCase::SnakeCase,
+            Case::ScreamingSnake => NamingCase::ScreamingSnakeCase,
+            Case::Pascal => NamingCase::PascalCase,
+            Case::Camel => NamingCase::CamelCase,
+            Case::Kebab => NamingCase::KebabCase,
+            // For any other cases that convert_case might have, map to Unknown
+            _ => NamingCase::Unknown,
         }
     }
 }
@@ -194,7 +297,8 @@ impl FromStr for NamingCase {
 /// ```
 pub fn convert_case(input: &str, _from: NamingCase, to: NamingCase) -> Result<String> {
     // If the target case is unknown, we can't convert
-    let target_case = to.to_convert_case()
+    let target_case: Option<Case> = to.into();
+    let target_case = target_case
         .ok_or_else(|| anyhow!("Cannot convert to unknown case"))?;
     
     // Use the convert_case crate for conversion
@@ -225,4 +329,82 @@ pub fn can_convert(_input: &str, from: NamingCase, to: NamingCase) -> bool {
     
     // Can convert from Unknown to any known case, and between known cases
     true
+}
+
+/// Find the closest match using a simple string distance algorithm
+/// 
+/// Uses a basic edit distance algorithm to find the most similar string
+/// from a list of options.
+fn find_closest_match<'a>(input: &str, options: &'a [&'a str]) -> Option<&'a str> {
+    let input_lower = input.to_lowercase();
+    
+    // First try exact match ignoring case
+    for option in options {
+        if option.to_lowercase() == input_lower {
+            return Some(option);
+        }
+    }
+    
+    // Then try substring match
+    for option in options {
+        let option_lower = option.to_lowercase();
+        if option_lower.contains(&input_lower) || input_lower.contains(&option_lower) {
+            return Some(option);
+        }
+    }
+    
+    // Finally try Levenshtein distance for close matches
+    let mut best_distance = usize::MAX;
+    let mut best_match = None;
+    
+    for option in options {
+        let distance = levenshtein_distance(&input_lower, &option.to_lowercase());
+        if distance < best_distance && distance <= 3 { // Only suggest if distance is reasonable
+            best_distance = distance;
+            best_match = Some(*option);
+        }
+    }
+    
+    best_match
+}
+
+/// Calculate Levenshtein distance between two strings
+fn levenshtein_distance(s1: &str, s2: &str) -> usize {
+    let len1 = s1.chars().count();
+    let len2 = s2.chars().count();
+    
+    if len1 == 0 {
+        return len2;
+    }
+    if len2 == 0 {
+        return len1;
+    }
+    
+    let mut matrix = vec![vec![0; len2 + 1]; len1 + 1];
+    
+    // Initialize first row and column
+    for (i, row) in matrix.iter_mut().enumerate().take(len1 + 1) {
+        row[0] = i;
+    }
+    for j in 0..=len2 {
+        matrix[0][j] = j;
+    }
+    
+    let s1_chars: Vec<char> = s1.chars().collect();
+    let s2_chars: Vec<char> = s2.chars().collect();
+    
+    for i in 1..=len1 {
+        for j in 1..=len2 {
+            let cost = if s1_chars[i - 1] == s2_chars[j - 1] { 0 } else { 1 };
+            matrix[i][j] = std::cmp::min(
+                std::cmp::min(
+                    matrix[i - 1][j] + 1,      // deletion
+                    matrix[i][j - 1] + 1       // insertion
+                ),
+                matrix[i - 1][j - 1] + cost    // substitution
+            );
+        }
+    }
+    
+    matrix[len1][len2]
 }
