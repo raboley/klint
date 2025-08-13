@@ -102,7 +102,8 @@ impl Fixer {
             }
             
             // Handle word boundaries for normal code
-            if ch.is_alphanumeric() || ch == '_' {
+            // Include hyphens as part of words to handle table names like "L4_rule_Approved-change"
+            if ch.is_alphanumeric() || ch == '_' || ch == '-' {
                 current_word.push(ch);
             } else {
                 result.push_str(&Self::process_word(&current_word, old_name, new_name));

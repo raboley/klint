@@ -1,28 +1,2 @@
-# KQL Linter Configuration
-# https://github.com/yourusername/klint
-
 rules:
-  # Table naming convention
-  # Options: PascalCase, camelCase, snake_case, SCREAMING_SNAKE_CASE, kebab-case
-  table_naming: PascalCase
-  
-  # Tables to exclude from linting (supports glob patterns)
-  excluded_tables: []
-    # - "temp_*"
-    # - "staging_*" 
-    # - "external_*"
-
-output:
-  # Output format: terminal, json
-  format: terminal
-  
-  # Enable colored output (terminal format only)
-  colors: true
-  
-  # Optional: Generate report file
-  # report_path: "klint-report.md"
-
-# File patterns to exclude from linting
-exclude:
-  # - "test/**/*.kql"
-  # - "**/temp/**"
+  table_naming: kebab-case

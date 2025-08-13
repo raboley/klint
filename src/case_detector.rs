@@ -73,44 +73,68 @@ impl NamingCase {
 pub fn detect_case(name: &str) -> NamingCase {
     debug!("Detecting case for: {}", name);
     
-    // Check for various patterns
-    if name.chars().all(|c| c.is_uppercase() || c == '_') && name.contains('_') {
+    // First check for pure patterns (no mixed cases)
+    let has_underscores = name.contains('_');
+    let has_hyphens = name.contains('-');
+    let has_uppercase = name.chars().any(|c| c.is_uppercase());
+    let has_lowercase = name.chars().any(|c| c.is_lowercase());
+    
+    // If we have multiple separators or complex mixing, it's likely Unknown
+    if has_underscores && has_hyphens {
+        debug!("Mixed separators detected, returning Unknown");
+        return NamingCase::Unknown;
+    }
+    
+    // SCREAMING_SNAKE_CASE: all uppercase with underscores, no lowercase
+    if has_underscores && has_uppercase && !has_lowercase && name.chars().all(|c| c.is_uppercase() || c == '_') {
         return NamingCase::ScreamingSnakeCase;
     }
     
-    if name.chars().all(|c| c.is_lowercase() || c == '_') && name.contains('_') {
+    // snake_case: all lowercase with underscores, no uppercase
+    if has_underscores && has_lowercase && !has_uppercase && name.chars().all(|c| c.is_lowercase() || c == '_') {
         return NamingCase::SnakeCase;
     }
     
-    if name.contains('-') {
+    // kebab-case: all lowercase with hyphens, no uppercase or underscores
+    if has_hyphens && has_lowercase && !has_uppercase && !has_underscores && name.chars().all(|c| c.is_lowercase() || c == '-') {
         return NamingCase::KebabCase;
     }
     
-    if name.chars().next().map_or(false, |c| c.is_uppercase()) {
-        // Check if it's PascalCase (has internal uppercase letters)
-        if name.chars().skip(1).any(|c| c.is_uppercase()) {
-            return NamingCase::PascalCase;
-        }
+    // If we have hyphens but mixed case, it's complex - return Unknown
+    if has_hyphens && (has_uppercase || has_underscores) {
+        debug!("Complex mixed case with hyphens detected, returning Unknown");
+        return NamingCase::Unknown;
     }
     
-    if name.chars().next().map_or(false, |c| c.is_lowercase()) {
-        // Check if it's camelCase (has internal uppercase letters)
-        if name.chars().skip(1).any(|c| c.is_uppercase()) {
-            return NamingCase::CamelCase;
-        }
+    // If we have underscores with mixed case (not pure snake/screaming), it's complex
+    if has_underscores && has_uppercase && has_lowercase {
+        debug!("Complex mixed case with underscores detected, returning Unknown");
+        return NamingCase::Unknown;
     }
     
-    // Single word starting with uppercase
-    if name.chars().next().map_or(false, |c| c.is_uppercase()) 
+    // PascalCase: starts with uppercase, has more uppercase, no separators
+    if !has_underscores && !has_hyphens && name.chars().next().map_or(false, |c| c.is_uppercase()) && name.chars().skip(1).any(|c| c.is_uppercase()) {
+        return NamingCase::PascalCase;
+    }
+    
+    // camelCase: starts with lowercase, has uppercase, no separators
+    if !has_underscores && !has_hyphens && name.chars().next().map_or(false, |c| c.is_lowercase()) && name.chars().skip(1).any(|c| c.is_uppercase()) {
+        return NamingCase::CamelCase;
+    }
+    
+    // Single word starting with uppercase (no separators, no internal uppercase)
+    if !has_underscores && !has_hyphens && name.chars().next().map_or(false, |c| c.is_uppercase()) 
         && name.chars().skip(1).all(|c| c.is_lowercase()) {
         return NamingCase::PascalCase;
     }
     
-    // Single word all lowercase
-    if name.chars().all(|c| c.is_lowercase()) {
+    // Single word all lowercase (no separators)
+    if !has_underscores && !has_hyphens && name.chars().all(|c| c.is_lowercase()) {
         return NamingCase::SnakeCase;
     }
     
+    // Anything else is Unknown
+    debug!("No clear pattern detected, returning Unknown");
     NamingCase::Unknown
 }
 
@@ -187,10 +211,10 @@ pub fn convert_case(input: &str, _from: NamingCase, to: NamingCase) -> Result<St
 /// 
 /// # Returns
 /// 
-/// True if conversion is possible, false if either case is Unknown
+/// True if conversion is possible, false if target case is Unknown
 pub fn can_convert(_input: &str, from: NamingCase, to: NamingCase) -> bool {
-    // Can't convert from or to unknown
-    if from == NamingCase::Unknown || to == NamingCase::Unknown {
+    // Can't convert to unknown, but can convert from unknown
+    if to == NamingCase::Unknown {
         return false;
     }
     
@@ -199,6 +223,6 @@ pub fn can_convert(_input: &str, from: NamingCase, to: NamingCase) -> bool {
         return true;
     }
     
-    // All other conversions are theoretically possible
+    // Can convert from Unknown to any known case, and between known cases
     true
 }
