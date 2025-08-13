@@ -1,0 +1,30 @@
+// Sample KQL file with mixed naming conventions
+// Since table-naming is disabled, these should all pass
+
+// These would normally violate different naming conventions
+.create table user_profiles (
+    user_id: string,
+    username: string,
+    email: string
+)
+
+.create table OrderDetails (
+    OrderId: string,
+    CustomerId: string,
+    ProductId: string
+)
+
+.create table SYSTEM_METRICS (
+    METRIC_NAME: string,
+    METRIC_VALUE: real,
+    TIMESTAMP: datetime
+)
+
+.create table product-catalog (
+    product_id: string,
+    name: string,
+    price: real
+)
+
+// All of these should pass because table-naming rule is disabled
+// No violations should be reported regardless of naming convention

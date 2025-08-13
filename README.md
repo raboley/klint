@@ -54,16 +54,16 @@ cargo install klint
 
 ```bash
 # Check files for violations
-klint samples/violations/mixed_cases.kql
+klint samples/table_name/violations/mixed_cases.kql
 
 # Fix violations automatically
-klint --fix samples/violations/mixed_cases.kql
+klint --fix samples/table_name/violations/mixed_cases.kql
 
 # Preview what fixes would be applied
-klint --preview samples/violations/mixed_cases.kql
+klint --preview samples/table_name/violations/mixed_cases.kql
 
 # Output results in JSON format
-klint --output json samples/violations/mixed_cases.kql
+klint --output json samples/table_name/violations/mixed_cases.kql
 
 # Initialize default configuration
 klint init
@@ -150,12 +150,12 @@ Disable linting for specific lines or rules:
 ### Check a Single File
 
 ```bash
-klint samples/violations/mixed_cases.kql
+klint samples/table_name/violations/mixed_cases.kql
 ```
 
 Output:
 ```
-samples/violations/mixed_cases.kql
+samples/table_name/violations/mixed_cases.kql
   4:1 ✗ Table 'user_logs' uses snake_case but should use PascalCase
   12:1 ✗ Table 'error-logs' uses kebab-case but should use PascalCase
   19:1 ✗ Table 'SYSTEM_METRICS' uses SCREAMING_SNAKE_CASE but should use PascalCase
@@ -167,12 +167,12 @@ samples/violations/mixed_cases.kql
 ### Fix Files Automatically
 
 ```bash
-klint --fix samples/violations/mixed_cases.kql
+klint --fix samples/table_name/violations/mixed_cases.kql
 ```
 
 Output:
 ```
-samples/violations/mixed_cases.kql
+samples/table_name/violations/mixed_cases.kql
   4:1 ✓ Fixed: 'user_logs' → 'UserLogs'
   12:1 ✓ Fixed: 'error-logs' → 'ErrorLogs'
   19:1 ✓ Fixed: 'SYSTEM_METRICS' → 'SystemMetrics'
@@ -184,12 +184,12 @@ samples/violations/mixed_cases.kql
 ### Preview Mode
 
 ```bash
-klint --preview samples/violations/mixed_cases.kql
+klint --preview samples/table_name/violations/mixed_cases.kql
 ```
 
 Output:
 ```
-samples/violations/mixed_cases.kql
+samples/table_name/violations/mixed_cases.kql
   4:1 ✗ Table 'user_logs' uses snake_case but should use PascalCase
   12:1 ✗ Table 'error-logs' uses kebab-case but should use PascalCase
   19:1 ✗ Table 'SYSTEM_METRICS' uses SCREAMING_SNAKE_CASE but should use PascalCase
@@ -207,7 +207,7 @@ Proposed fixes:
 ### JSON Output
 
 ```bash
-klint --output json samples/violations/mixed_cases.kql
+klint --output json samples/table_name/violations/mixed_cases.kql
 ```
 
 Output:
@@ -215,7 +215,7 @@ Output:
 {
   "violations": [
     {
-      "file": "samples/violations/mixed_cases.kql",
+      "file": "samples/table_name/violations/mixed_cases.kql",
       "line": 4,
       "column": 1,
       "table_name": "user_logs",
@@ -224,7 +224,7 @@ Output:
       "message": "Table 'user_logs' uses snake_case but should use PascalCase"
     },
     {
-      "file": "samples/violations/mixed_cases.kql",
+      "file": "samples/table_name/violations/mixed_cases.kql",
       "line": 12,
       "column": 1,
       "table_name": "error-logs",

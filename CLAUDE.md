@@ -60,7 +60,7 @@ Always look for existing functionality before implementing new code:
 
 ### Integration Tests
 - Test actual user workflows end-to-end
-- Use real KQL files in `samples/` directory
+- Use real KQL files in `samples/table_name/` directory
 - Test both success and failure cases
 - Verify actual output, not just that code doesn't crash
 
@@ -80,8 +80,8 @@ fn test_descriptive_name() {
 ```
 
 ### Test Data Management
-- Use `samples/violations/` for files that should trigger violations
-- Use `samples/valid/` for files that should pass validation
+- Use `samples/table_name/table_name/violations/` for files that should trigger violations
+- Use `samples/table_name/table_name/valid/` for files that should pass validation
 - Create unique test data for each test to avoid interference
 - Clean up any temporary files created during tests
 

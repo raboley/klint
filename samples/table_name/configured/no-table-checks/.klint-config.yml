@@ -1,0 +1,7 @@
+# Configuration that disables all table naming checks
+# This can be useful for legacy projects or when you want to focus on other linting rules
+
+settings:
+  # Disable the table-naming rule entirely
+  disabled:
+    - "table-naming"

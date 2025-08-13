@@ -17,6 +17,9 @@ pub struct Config {
     pub rules: RulesConfig,
     
     #[serde(default)]
+    pub settings: SettingsConfig,
+    
+    #[serde(default)]
     pub output: OutputConfig,
     
     #[serde(default)]
@@ -31,6 +34,13 @@ pub struct RulesConfig {
     
     #[serde(default)]
     pub excluded_tables: Vec<String>,
+}
+
+/// General settings configuration
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SettingsConfig {
+    #[serde(default)]
+    pub disabled: Vec<String>,
 }
 
 /// Output configuration
@@ -52,6 +62,14 @@ impl Default for RulesConfig {
         Self {
             table_naming: default_table_naming(),
             excluded_tables: Vec::new(),
+        }
+    }
+}
+
+impl Default for SettingsConfig {
+    fn default() -> Self {
+        Self {
+            disabled: Vec::new(),
         }
     }
 }
@@ -78,6 +96,7 @@ fn default_format() -> String {
 #[derive(Debug, Default)]
 pub struct ConfigBuilder {
     rules: Option<RulesConfig>,
+    settings: Option<SettingsConfig>,
     output: Option<OutputConfig>,
     exclude: Option<Vec<String>>,
 }
@@ -91,6 +110,32 @@ impl ConfigBuilder {
     /// Set the rules configuration
     pub fn rules(mut self, rules: RulesConfig) -> Self {
         self.rules = Some(rules);
+        self
+    }
+    
+    /// Set the settings configuration
+    pub fn settings(mut self, settings: SettingsConfig) -> Self {
+        self.settings = Some(settings);
+        self
+    }
+    
+    /// Disable specific rules
+    pub fn disable_rules<I, S>(mut self, rules: I) -> Self 
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        let mut settings = self.settings.unwrap_or_default();
+        settings.disabled.extend(rules.into_iter().map(|r| r.into()));
+        self.settings = Some(settings);
+        self
+    }
+    
+    /// Disable a single rule
+    pub fn disable_rule<S: Into<String>>(mut self, rule: S) -> Self {
+        let mut settings = self.settings.unwrap_or_default();
+        settings.disabled.push(rule.into());
+        self.settings = Some(settings);
         self
     }
     
@@ -174,6 +219,7 @@ impl ConfigBuilder {
     pub fn build(self) -> Config {
         Config {
             rules: self.rules.unwrap_or_default(),
+            settings: self.settings.unwrap_or_default(),
             output: self.output.unwrap_or_default(),
             exclude: self.exclude.unwrap_or_default(),
         }
@@ -202,6 +248,7 @@ impl Config {
     /// let config = Config::builder()
     ///     .table_naming("snake_case")
     ///     .exclude_table("legacy_table")
+    ///     .disable_rule("table-naming")
     ///     .colors(false)
     ///     .build();
     /// ```
@@ -267,8 +314,12 @@ impl Config {
 
     /// Find configuration file in current or parent directories
     /// 
-    /// Searches for `.klint.yml` or `.klint.yaml` files starting from the current
-    /// directory and walking up the directory tree.
+    /// Searches for configuration files in this order:
+    /// - `.klint-config.yml`
+    /// - `.klint.yml` 
+    /// - `.klint.yaml`
+    /// 
+    /// Starts from the current directory and walks up the directory tree.
     /// 
     /// # Returns
     /// 
@@ -277,12 +328,21 @@ impl Config {
         let mut current = std::env::current_dir().ok()?;
         
         loop {
+            // Check for .klint-config.yml first (preferred naming)
+            let config_path = current.join(".klint-config.yml");
+            if config_path.exists() {
+                debug!("Found config file at: {:?}", config_path);
+                return Some(config_path);
+            }
+            
+            // Check for .klint.yml (legacy)
             let config_path = current.join(".klint.yml");
             if config_path.exists() {
                 debug!("Found config file at: {:?}", config_path);
                 return Some(config_path);
             }
             
+            // Check for .klint.yaml (legacy)
             let config_path = current.join(".klint.yaml");
             if config_path.exists() {
                 debug!("Found config file at: {:?}", config_path);
@@ -304,6 +364,19 @@ impl Config {
     /// The configured naming case for table names
     pub fn naming_case(&self) -> NamingCase {
         NamingCase::try_from(self.rules.table_naming.as_str()).unwrap_or(NamingCase::Unknown)
+    }
+
+    /// Check if a rule is disabled
+    /// 
+    /// # Arguments
+    /// 
+    /// * `rule_name` - The name of the rule to check
+    /// 
+    /// # Returns
+    /// 
+    /// True if the rule is disabled in settings
+    pub fn is_rule_disabled(&self, rule_name: &str) -> bool {
+        self.settings.disabled.contains(&rule_name.to_string())
     }
 
     /// Check if a table is excluded from linting

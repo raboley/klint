@@ -1,0 +1,12 @@
+# Configuration for SCREAMING_SNAKE_CASE table naming convention
+# Commonly used in data warehouses and analytical databases
+
+rules:
+  # Enforce SCREAMING_SNAKE_CASE for all table names
+  table_naming: "SCREAMING_SNAKE_CASE"
+  
+  # Exclude some legacy tables that cannot be renamed
+  excluded_tables:
+    - "LegacyUserData"    # Legacy PascalCase table
+    - "temp_*"            # Temporary tables in snake_case
+    - "staging_*"         # Staging tables

@@ -75,6 +75,12 @@ impl Linter {
 
     /// Check a single table name for violations
     fn check_table_name(&self, statement: &TableStatement, disable_directives: &[DisableDirective]) -> Result<Option<Violation>> {
+        // Skip if table-naming rule is disabled globally in settings
+        if self.config.is_rule_disabled("table-naming") {
+            debug!("Skipping table-naming rule - disabled in configuration");
+            return Ok(None);
+        }
+        
         // Skip if table is excluded
         if self.config.is_table_excluded(&statement.table_name) {
             debug!("Skipping excluded table: {}", statement.table_name);

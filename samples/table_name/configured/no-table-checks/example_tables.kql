@@ -1,0 +1,42 @@
+// Sample KQL file with various table naming conventions
+// All table naming violations should be ignored due to configuration
+
+// snake_case table (would normally violate PascalCase rule)
+.create table user_events (
+    user_id: string,
+    event_type: string,
+    timestamp: datetime,
+    properties: dynamic
+)
+
+// kebab-case table (would normally violate PascalCase rule)
+.create table order-details (
+    order_id: string,
+    product_name: string,
+    quantity: int,
+    price: real
+)
+
+// SCREAMING_SNAKE_CASE table (would normally violate PascalCase rule)
+.create table SYSTEM_LOGS (
+    log_level: string,
+    message: string,
+    timestamp: datetime,
+    source: string
+)
+
+// camelCase table (would normally violate PascalCase rule)
+.create table customerData (
+    customer_id: string,
+    first_name: string,
+    last_name: string,
+    email: string
+)
+
+// Mixed naming in one file - all should pass because table checks are disabled
+.create table inventory_items (item_id: string, name: string)
+.create table sales-reports (report_id: string, date: datetime)
+.create table UserSessions (session_id: string, user_id: string)
+
+// Even completely non-standard naming should pass
+.create table My_Strange123_Table_Name (id: int, data: string)

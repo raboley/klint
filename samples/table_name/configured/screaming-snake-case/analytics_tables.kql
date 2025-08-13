@@ -1,0 +1,57 @@
+// Sample KQL file following SCREAMING_SNAKE_CASE convention
+// Common in data warehouse and analytics environments
+
+// ✅ Correctly named tables (SCREAMING_SNAKE_CASE)
+.create table USER_EVENTS (
+    USER_ID: string,
+    EVENT_TYPE: string,
+    EVENT_TIMESTAMP: datetime,
+    SESSION_ID: string,
+    PROPERTIES: dynamic
+)
+
+.create table ORDER_DETAILS (
+    ORDER_ID: string,
+    CUSTOMER_ID: string,
+    PRODUCT_ID: string,
+    QUANTITY: int,
+    UNIT_PRICE: real,
+    ORDER_DATE: datetime
+)
+
+.create table SYSTEM_METRICS (
+    METRIC_NAME: string,
+    METRIC_VALUE: real,
+    TIMESTAMP: datetime,
+    HOST_NAME: string,
+    ENVIRONMENT: string
+)
+
+.create table CUSTOMER_DEMOGRAPHICS (
+    CUSTOMER_ID: string,
+    AGE_GROUP: string,
+    LOCATION: string,
+    SIGNUP_DATE: datetime
+)
+
+// ✅ Legacy table that's excluded in config
+.create table LegacyUserData (
+    id: int,
+    name: string,
+    created: datetime
+)
+
+// ✅ Temporary table that's excluded via pattern
+.create table temp_processing_data (
+    batch_id: string,
+    status: string,
+    created: datetime
+)
+
+// ❌ These would cause violations (wrong naming convention)
+// .create table user_sessions (session_id: string, user_id: string)
+// .create table ProductCatalog (product_id: string, name: string)
+// .create table order-summary (order_id: string, total: real)
+
+// ✅ Tables with nolint comments (for special cases)
+.create table mixed_format_table (id: int, data: string) //nolint:table-naming

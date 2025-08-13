@@ -1,0 +1,12 @@
+# Configuration for snake_case table naming convention
+# Popular in modern applications and microservices
+
+rules:
+  # Enforce snake_case for all table names
+  table_naming: "snake_case"
+  
+  # Exclude some tables that use different conventions
+  excluded_tables:
+    - "SystemEvents"      # Legacy system table
+    - "APP_*"            # Application tables in SCREAMING_SNAKE_CASE
+    - "api-*"            # API tables that use kebab-case

@@ -1,0 +1,75 @@
+// Sample KQL file following snake_case convention
+// Common in modern web applications and microservices
+
+// ✅ Correctly named tables (snake_case)
+.create table user_profiles (
+    user_id: string,
+    username: string,
+    email: string,
+    created_at: datetime,
+    updated_at: datetime
+)
+
+.create table order_items (
+    order_id: string,
+    product_id: string,
+    quantity: int,
+    unit_price: real,
+    line_total: real
+)
+
+.create table session_events (
+    session_id: string,
+    user_id: string,
+    event_type: string,
+    timestamp: datetime,
+    page_url: string,
+    user_agent: string
+)
+
+.create table payment_transactions (
+    transaction_id: string,
+    order_id: string,
+    payment_method: string,
+    amount: real,
+    currency: string,
+    status: string,
+    processed_at: datetime
+)
+
+.create table product_reviews (
+    review_id: string,
+    product_id: string,
+    user_id: string,
+    rating: int,
+    review_text: string,
+    created_at: datetime
+)
+
+// ✅ Excluded tables (defined in config)
+.create table SystemEvents (
+    event_id: string,
+    event_type: string,
+    timestamp: datetime
+)
+
+.create table APP_CONFIGURATION (
+    config_key: string,
+    config_value: string,
+    environment: string
+)
+
+.create table api-endpoints (
+    endpoint_id: string,
+    path: string,
+    method: string,
+    created_at: datetime
+)
+
+// ❌ These would cause violations if not commented out
+// .create table UserSessions (session_id: string, user_id: string)
+// .create table ORDER_SUMMARY (order_id: string, total: real)
+// .create table product-catalog (product_id: string, name: string)
+
+// ✅ Exception using nolint
+.create table SpecialCaseTable (id: int) //nolint:table-naming

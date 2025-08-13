@@ -1,0 +1,12 @@
+# Configuration demonstrating rule disabling in settings
+# Shows how to selectively disable specific rules
+
+rules:
+  # Still define the table naming convention (even though it's disabled)
+  table_naming: "PascalCase"
+
+settings:
+  # Disable specific rules - can contain multiple rule names
+  disabled:
+    - "table-naming"    # Completely disable table naming checks
+    # - "future-rule"   # Other rules could be disabled here in the future
