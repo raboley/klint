@@ -1,0 +1,25 @@
+// Sample KQL file with correct PascalCase naming
+
+.create table UserProfiles (
+    UserId: string,
+    Email: string,
+    FirstName: string,
+    LastName: string,
+    CreatedDate: datetime
+)
+
+.create table OrderDetails (
+    OrderId: string,
+    ProductId: string,
+    Quantity: int,
+    UnitPrice: real,
+    Timestamp: datetime
+)
+
+.create table SystemEvents (
+    EventId: string,
+    EventType: string,
+    Severity: string,
+    Description: string,
+    Timestamp: datetime
+)

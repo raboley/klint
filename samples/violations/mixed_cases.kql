@@ -1,0 +1,39 @@
+// Sample KQL file with various table naming violations
+
+// This should be PascalCase according to default config
+.create table user_logs (
+    Level: string,
+    Timestamp: datetime,
+    UserId: string,
+    Message: string
+)
+
+// kebab-case violation  
+.create table error-logs (
+    ErrorCode: int,
+    ErrorMessage: string,
+    Timestamp: datetime
+)
+
+// SCREAMING_SNAKE_CASE violation
+.create table SYSTEM_METRICS (
+    MetricName: string,
+    Value: real,
+    Timestamp: datetime
+)
+
+// Correct PascalCase (should not be flagged)
+.create table UserSessions (
+    SessionId: string,
+    UserId: string,
+    StartTime: datetime,
+    EndTime: datetime
+)
+
+// camelCase violation
+.create table applicationLogs (
+    Application: string,
+    LogLevel: string,
+    Message: string,
+    Timestamp: datetime
+)
