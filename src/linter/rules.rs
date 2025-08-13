@@ -29,11 +29,17 @@ pub struct TableNamingRule {
 }
 
 impl TableNamingRule {
+    /// Create a new table naming rule with the specified case
     pub fn new(expected_case: NamingCase) -> Self {
         Self {
             expected_case,
             severity: Severity::Error,
         }
+    }
+    
+    /// Get the expected naming case
+    pub fn expected_case(&self) -> NamingCase {
+        self.expected_case
     }
 }
 

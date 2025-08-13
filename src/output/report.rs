@@ -98,7 +98,7 @@ fn generate_markdown_report(results: &[LintResult]) -> Result<String> {
                     ));
                 }
                 
-                report.push_str("\n");
+                report.push('\n');
             }
         }
     }

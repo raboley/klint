@@ -18,11 +18,28 @@ pub struct Linter {
 
 impl Linter {
     /// Create a new linter with the given configuration
+    /// 
+    /// # Arguments
+    /// 
+    /// * `config` - The linting configuration to use
+    /// 
+    /// # Returns
+    /// 
+    /// A new Linter instance
     pub fn new(config: Config) -> Self {
         Self { config }
     }
 
-    /// Lint content and return violations
+    /// Lint KQL content and return any naming violations found
+    /// 
+    /// # Arguments
+    /// 
+    /// * `content` - The KQL content to lint
+    /// * `file_path` - Optional path to the file being linted (for reporting)
+    /// 
+    /// # Returns
+    /// 
+    /// A LintResult containing any violations found
     pub fn lint_content(&self, content: &str, file_path: Option<&PathBuf>) -> Result<LintResult> {
         let file_name = file_path
             .and_then(|p| p.file_name())
@@ -94,7 +111,11 @@ pub struct LintResult {
 }
 
 impl LintResult {
-    /// Check if there are any violations
+    /// Check if there are any violations in this result
+    /// 
+    /// # Returns
+    /// 
+    /// True if violations were found, false otherwise
     pub fn has_violations(&self) -> bool {
         !self.violations.is_empty()
     }

@@ -7,7 +7,16 @@ use std::path::{Path, PathBuf};
 use tracing::{debug, info};
 use walkdir::WalkDir;
 
-/// Process files based on the given path
+/// Process files based on the given path (file, directory, or glob pattern)
+/// 
+/// # Arguments
+/// 
+/// * `path` - The path to process (can be a file, directory, or glob pattern)
+/// * `recursive` - Whether to process directories recursively
+/// 
+/// # Returns
+/// 
+/// A vector of PathBuf objects for all KQL files found
 pub fn process_path(path: &Path, recursive: bool) -> Result<Vec<PathBuf>> {
     if path.is_file() {
         if is_kql_file(path) {
@@ -23,7 +32,15 @@ pub fn process_path(path: &Path, recursive: bool) -> Result<Vec<PathBuf>> {
     }
 }
 
-/// Check if a file is a KQL file
+/// Check if a file is a KQL file based on its extension
+/// 
+/// # Arguments
+/// 
+/// * `path` - The file path to check
+/// 
+/// # Returns
+/// 
+/// True if the file has a KQL-related extension (.kql, .kusto, .csl)
 pub fn is_kql_file(path: &Path) -> bool {
     path.extension()
         .and_then(|ext| ext.to_str())
@@ -89,13 +106,30 @@ fn walk_directory(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-/// Read file content
+/// Read the contents of a file as a string
+/// 
+/// # Arguments
+/// 
+/// * `path` - The path to the file to read
+/// 
+/// # Returns
+/// 
+/// The file contents as a string, or an error if reading fails
 pub fn read_file(path: &Path) -> Result<String> {
     fs::read_to_string(path)
         .with_context(|| format!("Failed to read file: {:?}", path))
 }
 
-/// Write file content
+/// Write content to a file
+/// 
+/// # Arguments
+/// 
+/// * `path` - The path where the file should be written
+/// * `content` - The content to write to the file
+/// 
+/// # Returns
+/// 
+/// Ok(()) if successful, or an error if writing fails
 pub fn write_file(path: &Path, content: &str) -> Result<()> {
     fs::write(path, content)
         .with_context(|| format!("Failed to write file: {:?}", path))

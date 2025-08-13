@@ -87,7 +87,7 @@ fn main() -> Result<()> {
     process::exit(exit_code);
 }
 
-fn init_config(force: bool) -> Result<i32> {
+fn init_config(_force: bool) -> Result<i32> {
     // TODO: Implement config initialization
     println!("Config initialization not yet implemented");
     Ok(0)

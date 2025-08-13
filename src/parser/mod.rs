@@ -12,12 +12,26 @@ pub struct Parser {
 }
 
 impl Parser {
-    /// Create a new parser with the given content
+    /// Create a new parser with the given KQL content
+    /// 
+    /// # Arguments
+    /// 
+    /// * `content` - The KQL content to parse
+    /// 
+    /// # Returns
+    /// 
+    /// A new Parser instance
     pub fn new(content: String) -> Self {
         Self { content }
     }
 
     /// Parse the content and extract table management commands
+    /// 
+    /// Currently supports `.create table` commands with simple pattern matching.
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of TableStatement objects representing found table definitions
     pub fn parse(&self) -> Result<Vec<TableStatement>> {
         trace!("Starting to parse KQL content");
         

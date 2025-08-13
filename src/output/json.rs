@@ -4,11 +4,17 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-use crate::linter::{LintResult, Violation};
+use crate::linter::LintResult;
 use crate::output::OutputFormatter;
 
 /// JSON output formatter
 pub struct JsonFormatter;
+
+impl Default for JsonFormatter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl JsonFormatter {
     pub fn new() -> Self {

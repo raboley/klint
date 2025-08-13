@@ -10,6 +10,7 @@ use crate::case_detector::NamingCase;
 
 /// Main configuration structure
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Default)]
 pub struct Config {
     #[serde(default)]
     pub rules: RulesConfig,
@@ -44,15 +45,6 @@ pub struct OutputConfig {
     pub report_path: Option<PathBuf>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            rules: RulesConfig::default(),
-            output: OutputConfig::default(),
-            exclude: Vec::new(),
-        }
-    }
-}
 
 impl Default for RulesConfig {
     fn default() -> Self {
@@ -82,7 +74,23 @@ fn default_format() -> String {
 }
 
 impl Config {
-    /// Load configuration from a file
+    /// Load configuration from a YAML file
+    /// 
+    /// # Arguments
+    /// 
+    /// * `path` - Path to the configuration file
+    /// 
+    /// # Returns
+    /// 
+    /// The loaded configuration, or an error if the file cannot be read or parsed
+    /// 
+    /// # Examples
+    /// 
+    /// ```no_run
+    /// use klint::Config;
+    /// 
+    /// let config = Config::from_file(".klint.yml").unwrap();
+    /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         debug!("Loading configuration from: {:?}", path);
@@ -98,6 +106,13 @@ impl Config {
     }
 
     /// Find configuration file in current or parent directories
+    /// 
+    /// Searches for `.klint.yml` or `.klint.yaml` files starting from the current
+    /// directory and walking up the directory tree.
+    /// 
+    /// # Returns
+    /// 
+    /// Some(PathBuf) if a configuration file is found, None otherwise
     pub fn find_config() -> Option<PathBuf> {
         let mut current = std::env::current_dir().ok()?;
         
@@ -123,11 +138,23 @@ impl Config {
     }
 
     /// Get the naming case from configuration
+    /// 
+    /// # Returns
+    /// 
+    /// The configured naming case for table names
     pub fn naming_case(&self) -> NamingCase {
-        NamingCase::from_str(&self.rules.table_naming)
+        self.rules.table_naming.parse().unwrap_or(NamingCase::Unknown)
     }
 
-    /// Check if a table is excluded
+    /// Check if a table is excluded from linting
+    /// 
+    /// # Arguments
+    /// 
+    /// * `table_name` - The name of the table to check
+    /// 
+    /// # Returns
+    /// 
+    /// True if the table should be excluded from linting
     pub fn is_table_excluded(&self, table_name: &str) -> bool {
         self.rules.excluded_tables.iter().any(|pattern| {
             // Simple pattern matching for now
@@ -135,7 +162,15 @@ impl Config {
         })
     }
 
-    /// Save configuration to a file
+    /// Save configuration to a YAML file
+    /// 
+    /// # Arguments
+    /// 
+    /// * `path` - Path where the configuration should be saved
+    /// 
+    /// # Returns
+    /// 
+    /// Ok(()) if successful, or an error if the file cannot be written
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref();
         let content = serde_yaml::to_string(self)?;
@@ -144,7 +179,11 @@ impl Config {
         Ok(())
     }
 
-    /// Create a default configuration file
+    /// Create a default configuration
+    /// 
+    /// # Returns
+    /// 
+    /// A Config instance with default settings (PascalCase table naming)
     pub fn create_default() -> Self {
         Config::default()
     }

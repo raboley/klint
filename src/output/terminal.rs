@@ -11,6 +11,12 @@ pub struct TerminalFormatter {
     use_colors: bool,
 }
 
+impl Default for TerminalFormatter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TerminalFormatter {
     pub fn new() -> Self {
         Self { use_colors: true }
@@ -92,12 +98,10 @@ impl OutputFormatter for TerminalFormatter {
         } else {
             let violations_text = if total_violations == 1 {
                 if self.use_colors { "1 violation".red().to_string() } else { "1 violation".to_string() }
+            } else if self.use_colors {
+                format!("{} violations", total_violations).red().to_string()
             } else {
-                if self.use_colors {
-                    format!("{} violations", total_violations).red().to_string()
-                } else {
-                    format!("{} violations", total_violations)
-                }
+                format!("{} violations", total_violations)
             };
             
             let files_with_violations_text = if files_with_violations == 1 {
