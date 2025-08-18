@@ -1,0 +1,30 @@
+# Sample configuration for klint-lsp
+# Place this file as 'klint.yaml' in your workspace root
+
+rules:
+  # Table naming convention (default: PascalCase)
+  table_naming: "PascalCase"
+  
+  # Tables to exclude from linting
+  excluded_tables:
+    - "legacy_user_data"
+    - "temp_table"
+    - "system_metrics"
+
+settings:
+  # Disabled rules (currently no per-rule disabling)
+  disabled: []
+
+output:
+  # Output format for CLI mode (doesn't affect LSP)
+  format: "colored"
+  colors: true
+  
+  # Optional: Generate a report file
+  # report_path: "./klint-report.json"
+
+# Global exclude patterns (files/tables to skip entirely)
+exclude:
+  - "temp_*"
+  - "staging_*"
+  - "test_data_*"
