@@ -65,30 +65,12 @@ impl KlintLanguageServer {
 
     /// Load configuration from workspace
     async fn load_config(&self, workspace_uri: Option<Url>) -> Config {
-        if let Some(workspace) = workspace_uri {
-            // Try to load klint.yaml from workspace root
-            let config_path = workspace.join("klint.yaml").ok()
-                .or_else(|| workspace.join(".klint.yaml").ok())
-                .or_else(|| workspace.join("klint.yml").ok());
-
-            if let Some(config_uri) = config_path {
-                if let Ok(config_path) = config_uri.to_file_path() {
-                    match Config::from_file(&config_path) {
-                        Ok(config) => {
-                            tracing::info!("Loaded configuration from {:?}", config_path);
-                            return config;
-                        }
-                        Err(e) => {
-                            tracing::warn!("Failed to load config from {:?}: {}", config_path, e);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Fallback to default configuration
-        tracing::info!("Using default configuration");
-        ConfigBuilder::new().build()
+        // Convert URI to path if provided
+        let workspace_path = workspace_uri
+            .and_then(|uri| uri.to_file_path().ok());
+        
+        // Use shared configuration loading logic
+        Config::load_for_workspace(workspace_path.as_ref())
     }
 
     /// Update configuration and regenerate diagnostics for all documents

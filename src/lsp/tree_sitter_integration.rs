@@ -39,14 +39,14 @@ impl KqlParser {
     }
 
     /// Parse KQL text and return the syntax tree
-    pub fn parse(&mut self, text: &str) -> Result<Tree> {
+    fn parse(&mut self, text: &str) -> Result<Tree> {
         self.parser
             .parse(text, None)
             .context("Failed to parse KQL text")
     }
 
     /// Extract table names from a parsed tree
-    pub fn extract_table_names(&self, tree: &Tree, source: &str) -> Result<Vec<TableReference>> {
+    fn extract_table_names(&self, tree: &Tree, source: &str) -> Result<Vec<TableReference>> {
         let mut cursor = QueryCursor::new();
         let captures = cursor.matches(&self.query, tree.root_node(), source.as_bytes());
 
@@ -84,10 +84,28 @@ impl KqlParser {
         Ok(table_references)
     }
 
-    /// Parse and extract table names in one operation
-    pub fn parse_and_extract(&mut self, text: &str) -> Result<Vec<TableReference>> {
+    /// Extract table references from KQL source code
+    /// 
+    /// Parses the KQL source and returns all table references found,
+    /// including both table definitions (CREATE TABLE) and table usages.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `text` - The KQL source code to analyze
+    /// 
+    /// # Returns
+    /// 
+    /// A vector of TableReference objects with position information
+    /// and reference type (definition or usage)
+    pub fn extract_table_references(&mut self, text: &str) -> Result<Vec<TableReference>> {
         let tree = self.parse(text)?;
         self.extract_table_names(&tree, text)
+    }
+    
+    /// Legacy method - use extract_table_references instead
+    #[deprecated(since = "0.1.0", note = "Use extract_table_references for clearer naming")]
+    pub fn parse_and_extract(&mut self, text: &str) -> Result<Vec<TableReference>> {
+        self.extract_table_references(text)
     }
 }
 
@@ -122,7 +140,7 @@ mod tests {
         let mut parser = KqlParser::new().unwrap();
         let kql = ".create table MyTable (id: int, name: string)";
 
-        let tables = parser.parse_and_extract(kql).unwrap();
+        let tables = parser.extract_table_references(kql).unwrap();
         assert_eq!(tables.len(), 1);
         assert_eq!(tables[0].name, "MyTable");
         assert_eq!(tables[0].reference_type, TableReferenceType::Definition);
@@ -133,7 +151,7 @@ mod tests {
         let mut parser = KqlParser::new().unwrap();
         let kql = "MyTable | where id > 0";
 
-        let tables = parser.parse_and_extract(kql).unwrap();
+        let tables = parser.extract_table_references(kql).unwrap();
         assert_eq!(tables.len(), 1);
         assert_eq!(tables[0].name, "MyTable");
         assert_eq!(tables[0].reference_type, TableReferenceType::Usage);
@@ -150,7 +168,7 @@ mod tests {
             FirstTable | join SecondTable on id
         "#;
 
-        let tables = parser.parse_and_extract(kql).unwrap();
+        let tables = parser.extract_table_references(kql).unwrap();
 
         let definitions: Vec<_> = tables
             .iter()

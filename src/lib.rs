@@ -40,6 +40,7 @@ pub mod configuration;
 pub mod disable_comments;
 pub mod error;
 pub mod file_processor;
+pub mod file_utils;
 pub mod linter;
 pub mod lsp;
 pub mod output;
