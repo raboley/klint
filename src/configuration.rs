@@ -325,7 +325,29 @@ impl Config {
     /// 
     /// Some(PathBuf) if a configuration file is found, None otherwise
     pub fn find_config() -> Option<PathBuf> {
-        let mut current = std::env::current_dir().ok()?;
+        Self::find_config_from_dir(&std::env::current_dir().ok()?)
+    }
+
+    /// Find configuration file starting from a specific directory
+    /// 
+    /// Searches for configuration files in this order:
+    /// - `.klint-config.yml`
+    /// - `.klint.yml` 
+    /// - `.klint.yaml`
+    /// - `klint.yaml`
+    /// - `klint.yml`
+    /// 
+    /// Starts from the given directory and walks up the directory tree.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `start_dir` - Directory to start searching from
+    /// 
+    /// # Returns
+    /// 
+    /// Some(PathBuf) if a configuration file is found, None otherwise
+    pub fn find_config_from_dir<P: AsRef<Path>>(start_dir: P) -> Option<PathBuf> {
+        let mut current = start_dir.as_ref().to_path_buf();
         
         loop {
             // Check for .klint-config.yml first (preferred naming)
@@ -349,12 +371,74 @@ impl Config {
                 return Some(config_path);
             }
             
+            // Check for klint.yaml (LSP-friendly naming)
+            let config_path = current.join("klint.yaml");
+            if config_path.exists() {
+                debug!("Found config file at: {:?}", config_path);
+                return Some(config_path);
+            }
+            
+            // Check for klint.yml (LSP-friendly naming)
+            let config_path = current.join("klint.yml");
+            if config_path.exists() {
+                debug!("Found config file at: {:?}", config_path);
+                return Some(config_path);
+            }
+            
             if !current.pop() {
                 break;
             }
         }
         
         None
+    }
+
+    /// Load configuration for a workspace, with intelligent fallbacks
+    /// 
+    /// This method implements cascading configuration discovery:
+    /// 1. If workspace_path is provided, look for config files in that directory and parent directories
+    /// 2. Fall back to current directory search if no workspace is provided
+    /// 3. Use default configuration if no config file is found
+    /// 
+    /// # Arguments
+    /// 
+    /// * `workspace_path` - Optional workspace directory path (for LSP)
+    /// 
+    /// # Returns
+    /// 
+    /// A Config instance, either loaded from file or using defaults
+    pub fn load_for_workspace<P: AsRef<Path>>(workspace_path: Option<P>) -> Config {
+        // Try to find config in workspace if provided
+        if let Some(workspace) = workspace_path {
+            if let Some(config_path) = Self::find_config_from_dir(workspace) {
+                match Self::from_file(&config_path) {
+                    Ok(config) => {
+                        info!("Loaded configuration from {:?}", config_path);
+                        return config;
+                    }
+                    Err(e) => {
+                        tracing::warn!("Failed to load config from {:?}: {}", config_path, e);
+                    }
+                }
+            }
+        }
+        
+        // Fall back to standard config discovery
+        if let Some(config_path) = Self::find_config() {
+            match Self::from_file(&config_path) {
+                Ok(config) => {
+                    info!("Loaded configuration from {:?}", config_path);
+                    return config;
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to load config from {:?}: {}", config_path, e);
+                }
+            }
+        }
+
+        // Fall back to default configuration
+        info!("Using default configuration");
+        ConfigBuilder::new().build()
     }
 
     /// Get the naming case from configuration
